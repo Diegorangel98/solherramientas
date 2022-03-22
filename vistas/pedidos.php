@@ -85,7 +85,11 @@
             </div>
             <div class="col-12 col-md-12">
                 <div class="m-1 mt-3 rounded-3 bg-white shadow-sm px-4 py-2">
-                    <span class="h5 fw-bold"><i class="i-docs"></i> Observaciones: </span><span class="small">Urgente</span>
+                    <span class="h5 fw-bold"><i class="i-docs"></i> Observaciones: </span><span class="small">
+                    <pre class="hidden">
+                        <?php print_r($_SESSION) ?>
+                    </pre>    
+                </span>
                 </div>
             </div>
             <div class="col-12 col-md-6">

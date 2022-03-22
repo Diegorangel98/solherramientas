@@ -67,38 +67,26 @@ switch ($_POST["op"])
 }
 function ingresosoli($idsede,$iddepartamento,$idarea,$obs)
 {
+	require_once "../../../general/objetos/solicitud_herramientas.php";
+	$obj = new SolicitudHerramientas();
+	echo $_SESSION["conse"],$_SESSION["privi"];
 	if($_SESSION["conse"]>0)
 	{
-		if($origen=="usuario")
+		if($_SESSION["privi"]==1 or $_SESSION["privi"]==2)
 		{
-			$auto=cons("select autorizado,orden from areas where id=".$idarea);
-			$autorizado=odbc_result($auto,"autorizado");
-			if(odbc_result($auto,"orden")>=2)
+			$result= $obj->insertSolicitud($idsede,$iddepartamento,$idarea,$obs,$idusuario,$doc_origen,$orden);
+			if($result)
 			{
-				$orden=$_SESSION["idusu"];
+				echo "viene vacio";
+				echo $result;
 			}
 			else
 			{
-				$orden=0;
+				echo $result;
+				echo "trae algo";
 			}
 		}
-		else
-		{
-			$autorizado=1;
-			$orden=0;
-		}
-		if($_SESSION["privi"]==1 or $_SESSION["privi"]==2 or $autorizado==1)
-		{
-			$result=cons("insert into solicitudes(id,fecha,idsede,iddepartamento,idarea,hora,autorizado,observaciones,quien_crea,fecha_auto,hora_auto,documento_origen,atendida,ok)values(".$_SESSION["conse"].",'".date("j/n/Y")."',".$idsede.",".$iddepartamento.",".$idarea.",'".date( "h:i a",time())."',".$idusuario.",'".$obs."',".$idusuario.",'".date("j/n/Y")."','".date( "h:i a",time())."',".$doc_origen.",".$orden.",".$orden.")");
-		}
-		else
-		{
-			$result= $obj->insertSolicitud($idsede,$iddepartamento,$idarea,$obs,$idusuario,$doc_origen,$orden,$orden);
-		}
-		if($origen=="usuario")
-		{
-			echo "LA SOLICITUD FUE INVIADA CON EXITO... ".$_SESSION["conse"];
-		}
+		
 		$_SESSION["conse"]=0;
 	}
 	else
@@ -130,23 +118,18 @@ function detalles($idprod,$cantidad,$entrega,$orden)
 	{
 		$_SESSION["conse"]=consecutivo();
 	}
-	if($orden>=2)
-	{	
-		$result=cons("insert into detalles(idsolicitud,idproducto,cantidad_soli,cantidad_ent,pendiente,orden)values(".$_SESSION["conse"].",".$idprod.",".$cantidad.",".$entrega.",".($cantidad-$entrega).",1)");
-	}
-	else
-	{
-		$result= $obj->insertDetalle($idprod,$cantidad,$entrega);
-	}
+	
+	$result= $obj->insertDetalle($idprod,$cantidad,$entrega);
+	
 	return $result;
 }
 function ingresoDetalle($idproducto, $cantidad, $fin, $idsede, $idarea)
 {
-	print_r($_POST);
+	// print_r($_POST);
 	require_once "../../../general/objetos/solicitud_herramientas.php";
 	$obj = new SolicitudHerramientas();
 	$inv = $obj->getInventario($idproducto, $idsede)[0];
-	print_r($inv);
+	// print_r($inv);
 	if($inv)
 	{
 		$can = $inv["cantidad"];
@@ -173,17 +156,7 @@ function ingresoDetalle($idproducto, $cantidad, $fin, $idsede, $idarea)
 	}
 	else
 	{
-		if($can>0)
-		{
-			$resinv=restarinventario($can,odbc_result($inv,"referencia"),odbc_result($inv,"bodega"));
-			$resp=detalles($idprod,$cantidad,$can,0);
-			echo '{"operacion":"pen","resultado":"'.$resp.'","fin":"'.$fin.'"}';
-		}
-		else
-		{
-			$resp=detalles($idprod,$cantidad,0,0);
-			echo '{"operacion":"fal","resultado":"'.$resp.'","fin":"'.$fin.'"}';
-		}
+		echo "No existe inventario";
 		
 	}
 }
@@ -360,12 +333,27 @@ function sesion($usu, $clave)
 	}
 	else if($rst[0]["alias"]==$usu && $rst[0]["clave"]==$clave)
 	{
+		// unset($_SESSION["privi"]);
 		$_SESSION["idusu"] = $rst[0]["idusuario"];
 		//$_SESSION["usuweb"] = $rst["usuario"];  // PARACONSULTA DONANTES MIENTRAS SE SACA LOGIN EN HEXABAN
 		$_SESSION["idusuweb"] = $rst[0]["idusuario"];
 		$_SESSION["usu"] = $rst[0]["usuario"];
-		$_SESSION["privi"] = $rst[0]["idprivilegio"];
 		$_SESSION["foto"] = $rst[0]["foto"];
+
+		require_once "../../../general/objetos/solicitud_herramientas.php";
+		$obj = new SolicitudHerramientas();
+		$privilegios = $obj->getPrivilegios($rst[0]["idusuario"]);
+		print_r($privilegios);
+		if(count($privilegios)>0)
+		{
+			for ($i=0; $i < count($privilegios) ; $i++) { 
+				if($privilegios[$i]["privilegio"] == 1 || $privilegios[$i]["privilegio"] == 2)
+				{
+					$_SESSION["privi"] = $privilegios[$i]["privilegio"];
+				}
+			}
+		}
+
 		$sql = "INSERT INTO seguridad_ingresos(idusuario, fecha, hora, ip)VALUES (".$_SESSION["idusuweb"].", '".date("d-m-y")."', '".date("H:i:s")."', '".$_SERVER["REMOTE_ADDR"]."');";
 		$base->cons($sql);
 		cierreinventario();
@@ -397,6 +385,7 @@ function validarSesion()
 		echo "no";
 	}else{
 		echo $_SESSION["idusuweb"];
+		
 	}
 }
 // function getSedes()

@@ -311,7 +311,7 @@ function agregar_item()
 }
 function ingresosoli()
 {
-	$.get("./php/funciones_pedidos.php",{"op":"ingresosoli","idsede":sedesN.val(),"iddependencia":dependenciasN.val(),"idarea":areasN.val(),"obs":"obs"},(x)=>{
+	$.post("./php/funciones_pedidos.php",{"op":"ingresosoli","idsede":sedesN.val(),"iddependencia":dependenciasN.val(),"idarea":areasN.val(),"obs":"obs"},(x)=>{
 		console.log(x);
 	});
 }
