@@ -16,3 +16,4 @@ $formatos->setTitulo("Pedidos");
 $formatos->setVista("pedidos");
 
 echo $formatos->render();
+// tset
