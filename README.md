@@ -1,2 +1,0 @@
-# solherramientas
-solicitud de herramientas
